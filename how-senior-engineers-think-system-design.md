@@ -78,7 +78,11 @@ flowchart LR
 
 ## Scaling: Vertical vs Horizontal
 
-> Scaling up means expanding a setup. Vertical scaling buying big PC with big RAM and big processing memory and replace with old server. Same server box, just larger. Easy, expensive, tedious, single point of failure . Other way: horizontal scaling, attaching the same ordinary servers and splitting the task between them where each server has an identical copy of the app. As traffic increases, increase the servers. No single point of failure. 
+> Scaling up means expanding a setup. 
+> 
+> Vertical scaling buying big PC with big RAM and big processing memory and replace with old server. Same server box, just larger. Easy, expensive, tedious, single point of failure . 
+> 
+> Other way: horizontal scaling, attaching the same ordinary servers and splitting the task between them where each server has an identical copy of the app. As traffic increases, increase the servers. No single point of failure. 
 
 **Two options for handling thousands of people at once.** You will pick between these two for real one day.
 
@@ -128,7 +132,9 @@ flowchart LR
 
 ## Load Balancers
 
-> LB handles allocation of multiple requests to each server if one server is busy, then it's sent to the different one. We can have multiple load balancers to not have a single point of failure. Nginx classic one Vercel Railway automatically have LBs. Now, interchangeability of each server is the next issue to solve. 
+> LB handles allocation of multiple requests to each server if one server is busy, then it's sent to the different one. We can have multiple load balancers to not have a single point of failure. 
+> 
+> Nginx classic one Vercel Railway automatically have LBs. Now, interchangeability of each server is the next issue to solve. 
 
 **The new question:** with more than one server, which server does a request go to? Something has to stand in front of your servers and hand each incoming request to one of them, spreading people out evenly so no single server gets overwhelmed while others sit idle.
 
@@ -171,7 +177,15 @@ flowchart TD
 
 ## Sessions and Stateless Servers
 
-> Interchangeability of servers means: if a user logs in to server 1 and, due to a big load, the user goes to server 2, server 2 should be able to also handle the request instead of giving a "not authorised" bad request. If each server is handling the user session ID, then this won't be possible. Stateless servers are those servers which are not allowed to remember anything about you between requests in their own memory. They have to fetch it from separate shared storage "Redis" (or from db etc ways in case of JWT). They are interchangeable servers. Redis is a in-memory separate shared storage for containing user session IDs. Super Fast to Read from. Once a user's session is put in one write operation, the rest of the operations are just read operations where the server reads from Redis in a very, very fast time. But this leads to one more single point of failure and extra costing . Next issue comes from the demerits of having one database talking with all servers. 
+> Interchangeability of servers means: if a user logs in to server 1 and, due to a big load, the user goes to server 2, server 2 should be able to also handle the request instead of giving a "not authorised" bad request. 
+> 
+> If each server is handling the user session ID, then this won't be possible. 
+> 
+> Stateless servers are those servers which are not allowed to remember anything about you between requests in their own memory. They have to fetch it from separate shared storage "Redis" (or from db etc ways in case of JWT). They are interchangeable servers. 
+> 
+> Redis is a in-memory separate shared storage for containing user session IDs. Super Fast to Read from. Once a user's session is put in one write operation, the rest of the operations are just read operations where the server reads from Redis in a very, very fast time. But this leads to one more single point of failure and extra costing . 
+> 
+> Next issue comes from the demerits of having one database talking with all servers. 
 
 **The problem**
 
@@ -237,6 +251,16 @@ flowchart LR
 ```
 
 ## Database Connections and Capacity
+
+> Solid healthy system, no bug. Still slow because they all talk to one database. each database has less than 100-200 connections, where 10 to 20 connections are connected to each server. When servers stack up, they may exceed the database connection limit. And the database has a limited processing speed and memory. 
+> 
+> And in the case of serverless architecture, many times when no Instance is available. Each request leads to making a fresh copy of the instance, Surprisingly worsen in seconds spike, lead to not slowness, but direct connection errors as symptoms. 
+>
+> Solution to connection limits : connection pool, a small set of connections open at all times and everything shared between the servers. Instead of server opening and closing own connections, request borrows one connection from the set, use it and hand it straight back to the next request to use. Database only sees a fixed number of connections, no matter how many servers and requests you have. PGbouncer is common for Postgres. Now, major managed databases ship with Pooler inbuilt. 
+>
+> Solution to genuine capacity exceeded : - Refine database queries. - Use indexes. Instead of long row search - Have a balance of read and write queries.
+>
+> Final fix is to scale it up. 
 
 **The front of the system is now solid:** load balancer, several stateless servers, everyone gets served no matter how many people show up. All of them talk to one database.
 
@@ -304,6 +328,16 @@ flowchart TD
 
 ## Read Replicas
 
+> In reality, there is always a write-to-read ratio of 1:200 to 1:400, where, for every 1 write, there are around 200 to 400 reads. Then the database spends 99% of its time on reads and 1% on writes. 
+> 
+> Fix for read processing 99% of DB : read replicas. Read-only copies of master DB. Each write will be handled by the master DB. And each read replica will handle the read queries. 99% load to 33% 33% 33%(3 Read replicas) and master db has 1% write only. At each update in master DB , read replicas get automatically updated. 
+>
+> This adds up to two costs: 1. Money 2. Replication lag(the window where copy is behind primary/master, made the application a little wrong, some users will see outdated data/lag)
+>
+> Now, replication lag is normal for other people viewing other posts. But you're saying your own posts lag feels broken. To solve that, you see your data from read query from the master/primary DB. 
+>
+> The real lesson: you have to find a balance between features and trade-offs(selective problems). 
+
 **The fix: make copies of the database.**
 
 - **One database stays the primary.** The only one you are allowed to write to. Everything you add or change goes there.
@@ -346,6 +380,14 @@ flowchart LR
 ```
 
 ## Caching
+
+> Suppose a trending feed which is read by millions of users. 1000000 same read operation WASTE = 1 read operation. Example: for follower count , in every second, counting millions of followers of an influencer page is wasteful . 
+>
+> Solution : Caching, Compute it once and keep the answer somewhere fast. The next person who asks gets the saved answer. The database is never touched. If a query is found in the cache, then it reads only the cache, If not existing in cache, then read from the database, return to the user, and also copy to the cache. Drastically faster 250 ms to 1 ms, as caching takes an 80%+ hits . Redis handles caching too. Caching trade-off between correctness and speed .
+>
+> Even though caching leads to data lag from DB, still, you can have a way of refresh(cache invalidation) every 5-second / 30-second / 5-minute /etc. Have a balance that: more the refreshing time, less the DB load. Less the refreshing time, more the DB load. (Hard task among engineers, subjective). For example, you can have caching in social media applications, but never in banking(because there incorrectness is scary). 
+>
+> Coding is dead : You can outsource the typing of code stuff like Redis calls, key naming, technology, syntax from AI. Engineering is in Goldern Period: But it is your decision-making What May be stable, and for how long, and what may never be , what do users expect and what users accept , that is the thing that AI cannot give, and this makes you irreplaceable. 
 
 **Some reads are still expensive.** There is one particular kind of question asked over and over, thousands of times, that gets almost the same answer every time. Computing the same answer thousands of times is just wasteful.
 
@@ -400,6 +442,8 @@ flowchart LR
 ```
 
 ## Queues and Workers
+
+> 
 
 **One more kind of slow.** It is a strange one, because it has nothing to do with reading the data at all.
 
