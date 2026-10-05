@@ -443,7 +443,16 @@ flowchart LR
 
 ## Queues and Workers
 
+> To make the website blazing fast and convenient for the user, three jobs run. 
+> 1. Server's Job answers the user fast and drops the slow word onto the queue. 
+> 2. Queue's Job bulks the slow jobs (email verification, video processing, analytics, notification, receipts, etc., that you don't want the user to wait on)
+> 3. Workers's Job  quietly chew through that work in the background. 
 > 
+> Tool "BullMQ", runs on Redis handle three jobs(Sessions, caching and queue ). 
+> 
+> Merits : application becomes super fast after sign-up, instant usage, no spinner loading 
+> 
+> Demerits : work happens later. Multiple things to run. Keep the queue and worker alive, and jobs can fail where multiple trys are required where human intervention is required. 
 
 **One more kind of slow.** It is a strange one, because it has nothing to do with reading the data at all.
 
@@ -507,6 +516,8 @@ flowchart TD
 ```
 
 ## Sharding
+
+> most apps don't need anything more than this what we have discussed throughout this documentation. Now a new exceptional challenge comes. 
 
 **Everything fixed so far was about handling more people. This last one isn't about people. It is about how much data you have.**
 
