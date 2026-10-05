@@ -517,7 +517,7 @@ flowchart TD
 
 ## Sharding
 
-> most apps don't need anything more than this what we have discussed throughout this documentation. Now a new exceptional challenge comes. 
+> most apps don't need anything more than this what we have discussed throughout this documentation. Now a new exceptional challenge comes. Everything we have discussed earlier was about handling more people. Now we are handling how much data we have. 
 
 **Everything fixed so far was about handling more people. This last one isn't about people. It is about how much data you have.**
 
