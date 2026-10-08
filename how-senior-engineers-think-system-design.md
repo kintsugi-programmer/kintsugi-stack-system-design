@@ -1,6 +1,6 @@
 # How senior engineers think system design 
 
-![alt text](images/1.webp)
+![alt text](images/image-1.webp)
 
 ## What System Design Is
 
@@ -617,7 +617,7 @@ flowchart LR
 
 > Assume each progression is yearly, I guess. 
 > Final: 
-> ![alt text](images/2.webp)
+> ![alt text](images/image-2.webp)
 >
 > Coding is dead : You can outsource the typing of code stuff like Redis calls, key naming, technology, syntax from AI. 
 > 
