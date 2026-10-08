@@ -5,7 +5,7 @@
 
 > System Design from Scratch: Load Balancers, Stateless Servers, Read Replicas, Caching, Queues & Sharding
 
-![alt text](images/image-1.webp)
+![alt text](images/image-2.webp)
 
 ## What System Design Is
 
@@ -678,6 +678,8 @@ flowchart TD
     E --> F["6. Move slow work to a queue for a worker"]
     F --> G["7. Shard when data will not fit any other way"]
 ```
+
+![alt text](images/image-1.webp)
 
 <div style="position:relative;width:100%;padding-bottom:56.25%;height:0;">
   <iframe
