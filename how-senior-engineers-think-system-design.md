@@ -1,6 +1,6 @@
 # How senior engineers think system design 
 
-![alt text](1.webp)
+![alt text](images/1.webp)
 
 ## What System Design Is
 
@@ -386,8 +386,6 @@ flowchart LR
 > Solution : Caching, Compute it once and keep the answer somewhere fast. The next person who asks gets the saved answer. The database is never touched. If a query is found in the cache, then it reads only the cache, If not existing in cache, then read from the database, return to the user, and also copy to the cache. Drastically faster 250 ms to 1 ms, as caching takes an 80%+ hits . Redis handles caching too. Caching trade-off between correctness and speed .
 >
 > Even though caching leads to data lag from DB, still, you can have a way of refresh(cache invalidation) every 5-second / 30-second / 5-minute /etc. Have a balance that: more the refreshing time, less the DB load. Less the refreshing time, more the DB load. (Hard task among engineers, subjective). For example, you can have caching in social media applications, but never in banking(because there incorrectness is scary). 
->
-> Coding is dead : You can outsource the typing of code stuff like Redis calls, key naming, technology, syntax from AI. Engineering is in Goldern Period: But it is your decision-making What May be stable, and for how long, and what may never be , what do users expect and what users accept , that is the thing that AI cannot give, and this makes you irreplaceable. 
 
 **Some reads are still expensive.** There is one particular kind of question asked over and over, thousands of times, that gets almost the same answer every time. Computing the same answer thousands of times is just wasteful.
 
@@ -518,6 +516,28 @@ flowchart TD
 ## Sharding
 
 > most apps don't need anything more than this what we have discussed throughout this documentation. Now a new exceptional challenge comes. Everything we have discussed earlier was about handling more people. Now we are handling how much data we have. 
+>
+> Caching and read replicas can save you to good extent only. But what happens if data goes into TBs? Where a single machine cannot store the whole database, and you can't even have backups. 
+> Solution is to split the database into multiple databases, where each one holds only a part of it. But still, we don't know how app is going to communicate with each database. And you cannot drop anywhere because now, to search a user, you have to pass multiple databases, which is slower. You need a rule. 
+>
+> Solution : Sharding, a database architecture pattern that splits a large dataset into smaller, independent chunks called shards and distributes them across multiple servers.
+> The rule is to take the user ID and divide it by the number of databases you have. It will give an even distribution. Each database holds the same fractions. 
+> 
+> shard = user_id % number_of_databases
+>
+> If ID is UUID, then use a hash function to convert any value to a number, the same number every time. 
+>
+> If a request comes from user id 5 : 5%3 = 2 => go to database 3 ( shard 0(db1), shard 1(db2), shard 2(db3))
+>
+> The rule is consistent. Each shard has a fraction of data. And you have essentially split your lookup time, your reading time, and your write time by the total number of shards. 
+>
+> Major cost is cross-shard queries. If it's about one person's query, no problem. But if it's about a group, then you have to pass through each and every database. Counting, sorting, and searching become very hard. 
+>
+> The art of sharding is about avoiding cross-shard queries. 
+>
+> Once a database is sharded, it is not reversible. 
+>
+> Super hard for live application with billions of users . Notion did it.  https://www.notion.com/blog/sharding-postgres-at-notion
 
 **Everything fixed so far was about handling more people. This last one isn't about people. It is about how much data you have.**
 
@@ -595,14 +615,24 @@ flowchart LR
 
 ## The Full System and the Real Skill
 
+> Assume each progression is yearly, I guess. 
+> Final: 
+> ![alt text](images/2.webp)
+>
+> Coding is dead : You can outsource the typing of code stuff like Redis calls, key naming, technology, syntax from AI. 
+> 
+> Engineering is in Goldern Period: But it is your decision-making What May be stable, and for how long, and what may never be , what do users expect and what users accept , that is the thing that AI cannot give, and this makes you irreplaceable. 
+>
+> System design is not about just the boxes, but about what to do, in what order, and at what cost. 
+
 **What we built, in order:**
 
 - Started with one server and one database.
-- More people showed up than one server could handle. Added servers and a load balancer in front of them.
-- The servers could not remember who was logged in. Moved sessions to a shared store.
-- They were all hitting one database. Pooled the connections and split reads across the replicas.
-- The same expensive answers were being computed over and over again. Cached them.
-- Slow work was making users wait. Moved it to a queue for a worker to handle in the background.
+- More people showed up than one server could handle. Added servers and a load balancer in front of them.(But also, +1 hop and health checks required)
+- The servers could not remember who was logged in. Moved sessions to a shared store.(Also, now One more thing to run.)
+- They were all hitting one database. Pooled the connections and split reads across the replicas.(But now there is a replication lag.)
+- The same expensive answers were being computed over and over again. Cached them.(Answers can go stale.)
+- Slow work was making users wait. Moved it to a queue(Work happens later.) for a worker(retries and add jobs) to handle in the background.
 
 **That is a real system.** It is genuinely how a huge number of apps are built.
 
