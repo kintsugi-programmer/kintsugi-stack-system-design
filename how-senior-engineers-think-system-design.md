@@ -1,5 +1,10 @@
 # How senior engineers think system design 
 
+- Repository: [github.com/kintsugi-programmer/kintsugi-stack-system-design](https://github.com/kintsugi-programmer/kintsugi-stack-system-design)
+- Documentation: [codingismeditation.github.io/system-design](https://codingismeditation.github.io/system-design/index.html)
+
+> System Design from Scratch: Load Balancers, Stateless Servers, Read Replicas, Caching, Queues & Sharding
+
 ![alt text](images/image-1.webp)
 
 ## What System Design Is
@@ -673,3 +678,14 @@ flowchart TD
     E --> F["6. Move slow work to a queue for a worker"]
     F --> G["7. Shard when data will not fit any other way"]
 ```
+
+<div style="position:relative;width:100%;padding-bottom:56.25%;height:0;">
+  <iframe
+    src="https://www.youtube.com/embed/nsLI0X0pKOs?si=ibxUxP5V4voW8Cyj"
+    title="YouTube video player"
+    style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+    referrerpolicy="strict-origin-when-cross-origin"
+    allowfullscreen>
+  </iframe>
+</div>
